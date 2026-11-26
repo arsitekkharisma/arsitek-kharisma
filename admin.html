@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin · Studio Arsitektur</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #efeee9;
+      --card: #e5e2da;
+      --ink: #1a1a18;
+      --muted: #5c5b57;
+      --line: #2b2b28;
+      --accent: #e85325;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 18px max(20px, calc((100% - 1120px) / 2)); border-bottom: 1px solid var(--line); font: 12px var(--mono); text-transform: uppercase; }
+    header a { color: inherit; text-decoration: none; }
+    main { max-width: 1120px; margin: 0 auto; padding: 36px 20px 72px; }
+    h1 { margin: 0 0 10px; font-size: clamp(26px, 4vw, 40px); font-weight: 500; }
+    h2 { margin: 0; font-size: 19px; font-weight: 500; }
+    p { color: var(--muted); line-height: 1.55; }
+    .eyebrow, label, .small-mono { font: 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+    .eyebrow { color: var(--accent); }
+    .panel, .project-card { border: 1px solid var(--line); background: rgba(255,255,255,.2); padding: 22px; margin-top: 22px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    label { display: grid; gap: 7px; color: var(--muted); }
+    input, textarea, select { width: 100%; padding: 10px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); font: 14px var(--sans); }
+    input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+    textarea { min-height: 80px; resize: vertical; }
+    .full-width { grid-column: 1 / -1; }
+    .check-row { display: flex; align-items: center; gap: 9px; font: 12px var(--sans); text-transform: none; }
+    button, .button-link { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); padding: 10px 14px; font: 11px var(--mono); text-transform: uppercase; text-decoration: none; cursor: pointer; }
+    button.secondary, .button-link.secondary { background: transparent; color: var(--ink); }
+    button.danger { background: transparent; border-color: #9c3218; color: #9c3218; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .form-actions, .card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 14px; }
+    .status { min-height: 22px; margin: 12px 0 0; font-size: 13px; }
+    .status.error { color: #9c3218; }
+    .status.success { color: #35654a; }
+    .project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .project-card { margin: 0; padding: 16px; min-width: 0; }
+    .project-card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: contain; background: var(--card); border: 1px solid rgba(43,43,40,.35); margin: 14px 0; }
+    .project-card .form-grid { gap: 10px; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0; font: 11px var(--mono); color: var(--muted); }
+    .plan-strip { display: flex; gap: 8px; overflow-x: auto; margin: 10px 0; }
+    .plan-strip img { width: 180px; flex: 0 0 180px; aspect-ratio: 16 / 10; margin: 0; }
+    .share-output { overflow-wrap: anywhere; padding: 10px; border: 1px dashed var(--accent); margin-top: 10px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 620px) {
+      header { padding: 14px 16px; }
+      main { padding: 26px 14px 52px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .full-width { grid-column: auto; }
+      .panel { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">Studio Arsitektur</a>
+    <a href="/">Kembali ke situs</a>
+  </header>
+  <main>
+    <span class="eyebrow">Area terbatas · Pengelola proyek</span>
+    <h1>Dashboard admin</h1>
+    <p>Impor model SketchUp GLB. Sistem menyimpan file asli, membuat salinan gzip yang identik, menghitung ukuran geometri, serta membuat pratinjau dan denah potongan otomatis.</p>
+
+    <section class="panel" id="login-panel">
+      <h2>Masuk admin</h2>
+      <form id="login-form" class="form-grid" autocomplete="on">
+        <label>Nama pengguna<input name="username" autocomplete="username" required maxlength="128"></label>
+        <label>Kata sandi<input name="password" type="password" autocomplete="current-password" required></label>
+        <div class="full-width"><button type="submit">Masuk</button></div>
+      </form>
+      <p class="status" id="login-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="form-actions"><span class="small-mono" id="admin-identity"></span><button class="secondary" id="logout-button" type="button">Keluar</button></div>
+      <section class="panel">
+        <h2>Impor model GLB</h2>
+        <p>Analisis dan denah dibuat di server lokal. AI bersifat opsional dan hanya menerima metadata setelah Anda memberi izin.</p>
+        <form id="upload-form">
+          <div class="form-grid">
+            <label>Nama proyek<input name="title" required maxlength="100" placeholder="Contoh: Rumah Tinggal"></label>
+            <label>Lokasi<input name="location" maxlength="120" placeholder="Kota, negara"></label>
+            <label>Tahun<input name="year" type="number" min="1800" max="2200" value="2026" required></label>
+            <label>Jumlah lantai<input name="floorCount" type="number" min="1" max="12" placeholder="Kosongkan untuk perkiraan otomatis"></label>
+            <label>Arah utara (derajat)<input name="northDegrees" type="number" min="0" max="359.99" step="0.1" value="0" required><small>0° = utara di atas denah; sudut bertambah searah jarum jam.</small></label>
+            <label class="full-width">Deskripsi<textarea name="description" maxlength="500" placeholder="Informasi singkat proyek"></textarea></label>
+            <label class="full-width">File model<input name="model" type="file" accept=".glb,model/gltf-binary" required></label>
+            <label class="full-width">Manifest lantai SketchUp (opsional)<input name="floorManifest" type="file" accept=".json,application/json"><small>Unggah JSON dari ekstensi Studio Arsitektur untuk memakai grup, elevasi denah, dan arah utara yang sudah ditandai.</small></label>
+            <label class="check-row full-width"><input name="isPublic" type="checkbox"> Tampilkan di daftar proyek publik</label>
+          </div>
+          <div class="form-actions"><button type="submit" id="upload-button">Impor GLB dan buat denah</button></div>
+          <p class="status" id="upload-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Proyek tersimpan</h2>
+        <p>Periksa ukuran, denah, dan arah kompas sebelum membagikan tautan kepada klien.</p>
+        <div class="project-grid" id="project-list"></div>
+        <p class="status" id="project-status" role="status" aria-live="polite"></p>
+      </section>
+    </section>
+  </main>
+  <script src="/admin-client.js" defer></script>
+</body>
+</html>

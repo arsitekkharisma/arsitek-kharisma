@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Pratinjau Proyek · Studio Arsitektur</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #efeee9;
+      --card: #e5e2da;
+      --ink: #1a1a18;
+      --muted: #5c5b57;
+      --line: #2b2b28;
+      --accent: #e85325;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); overflow-x: hidden; }
+    button, a { color: inherit; }
+    .client-board { max-width: 1280px; margin: auto; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+    .scroll-track { position: relative; height: 360vh; border-bottom: 1px solid var(--line); }
+    .sticky-viewport { position: sticky; top: 0; height: 100vh; height: 100dvh; min-height: 500px; overflow: hidden; background: var(--paper); }
+    #model-canvas, #preview-image { position: absolute; inset: 0; width: 100%; height: 100%; }
+    #model-canvas { z-index: 1; }
+    #model-canvas canvas { display: block; width: 100%; height: 100%; }
+    #preview-image { z-index: 0; display: none; object-fit: contain; }
+
+    .client-header { position: absolute; z-index: 30; inset: 0 0 auto; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-bottom: 1px solid var(--line); background: var(--paper); font: 11px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    .brand-mark { width: 14px; height: 14px; border: 1px solid var(--line); position: relative; }
+    .brand-mark::after { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--accent); }
+    .readonly-tag { color: var(--muted); font-size: 9px; }
+
+    .hero-copy { position: absolute; z-index: 10; top: 82px; left: 28px; width: min(460px, 42%); pointer-events: none; }
+    .eyebrow, .meta, .level-btn, .tb-label { font: 10px var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+    .eyebrow { color: var(--accent); }
+    h1 { margin: 12px 0 8px; font-size: clamp(26px, 3.5vw, 42px); font-weight: 500; line-height: 1.12; letter-spacing: -.025em; }
+    .project-description, .scroll-hint { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .project-description { margin: 0 0 8px; }
+    .scroll-hint { margin: 0 0 10px; font-size: 11px; }
+    #viewer-status { display: block; color: var(--muted); font: 9px var(--mono); }
+    .error { margin: 8px 0 0; color: #9c3218; font-size: 12px; }
+
+    .elevation-control { position: absolute; z-index: 15; left: 28px; bottom: 28px; padding: 12px 16px 12px 24px; border: 1px solid rgba(43,43,40,.25); background: rgba(239,238,233,.9); backdrop-filter: blur(4px); font-family: var(--mono); }
+    .elevation-axis { position: relative; width: 170px; height: 220px; border-left: 1px solid var(--line); }
+    .scroll-marker, .cut-live-tag { position: absolute; z-index: 2; top: 4%; transform: translateY(-50%); pointer-events: none; transition: top .1s linear; }
+    .scroll-marker { left: -10px; color: var(--accent); font-size: 10px; }
+    .cut-live-tag { left: 98px; max-width: 135px; padding: 2px 6px; background: var(--accent); color: white; font-size: 8px; font-weight: 600; white-space: nowrap; }
+    #floor-list { position: absolute; inset: 0; }
+    .level-btn { position: absolute; left: 12px; width: 82px; display: flex; justify-content: space-between; gap: 4px; padding: 3px 0; border: 0; background: transparent; text-align: left; color: var(--muted); cursor: pointer; transform: translateY(-50%); font-size: 8px; }
+    .level-btn::before { content: ''; position: absolute; top: 50%; left: -13px; width: 7px; height: 1px; background: var(--line); }
+    .level-btn.active { color: var(--ink); font-weight: 600; }
+    .level-btn:hover { background: transparent; color: var(--accent); }
+
+    .plan-panel { position: absolute; z-index: 15; top: 76px; right: 28px; width: min(320px, 28vw); padding: 12px; border: 1px solid var(--line); background: var(--paper); }
+    .plan-header { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font: 10px var(--mono); letter-spacing: .05em; }
+    #plan-level { color: var(--muted); white-space: nowrap; }
+    .plan-box { width: 100%; aspect-ratio: 4 / 3; border: 1px solid rgba(43,43,40,.25); background: #f5f4f0; }
+    .plan-box img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+    .title-block { position: absolute; z-index: 15; right: 28px; bottom: 24px; width: min(320px, 28vw); display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); background: var(--paper); }
+    .tb-cell { min-width: 0; padding: 7px 9px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .tb-cell:nth-child(3n) { border-right: 0; }
+    .tb-cell:nth-last-child(-n+3) { border-bottom: 0; }
+    .tb-cell.span-2 { grid-column: span 2; }
+    .tb-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 7px; }
+    .tb-value { display: block; overflow: hidden; font-size: 9px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+    .tb-value.mono { font-family: var(--mono); }
+    #tb-sheet { color: var(--accent); font: 600 12px var(--mono); }
+
+    .viewer-tools { padding: 20px 28px 36px; }
+    .section-control { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 16px; padding: 14px; border: 1px solid var(--line); }
+    .section-control label { font: 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+    .section-control output { margin-left: 8px; color: var(--accent); }
+    .section-control input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+    .section-control small { color: var(--muted); font-size: 12px; }
+    button, .download { padding: 9px 12px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 10px var(--mono); text-transform: uppercase; text-decoration: none; cursor: pointer; }
+    button:hover, .download:hover { background: var(--ink); color: var(--paper); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .details { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0; border: 1px solid var(--line); }
+    .detail { padding: 12px; border-right: 1px solid var(--line); }
+    .detail:last-child { border: 0; }
+    .detail span { display: block; }
+    .detail .label { margin-bottom: 5px; color: var(--muted); font: 9px var(--mono); text-transform: uppercase; }
+    .detail .value { overflow-wrap: anywhere; font: 12px var(--mono); }
+    footer { display: flex; justify-content: space-between; padding: 20px 28px; border-top: 1px solid var(--line); color: var(--muted); font: 10px var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+
+    @media (max-width: 768px) {
+      .client-header { height: 50px; padding: 0 14px; font-size: 9px; }
+      .hero-copy { top: 64px; left: 14px; width: 72%; }
+      h1 { margin: 7px 0 5px; font-size: 22px; }
+      .project-description { font-size: 11px; }
+      .scroll-hint { font-size: 10px; }
+      .elevation-control { top: 40%; bottom: auto; left: 10px; padding: 8px 10px 8px 16px; }
+      .elevation-axis { width: 132px; height: 160px; }
+      .level-btn { left: 9px; width: 72px; font-size: 7px; }
+      .level-btn::before { left: -10px; width: 5px; }
+      .cut-live-tag { left: 82px; max-width: 100px; padding: 1px 4px; font-size: 7px; }
+      .plan-panel { top: auto; right: auto; bottom: 10px; left: 10px; width: calc(46% - 12px); padding: 7px; }
+      .plan-header { font-size: 7px; }
+      .title-block { right: 10px; bottom: 10px; width: calc(54% - 12px); grid-template-columns: 1fr 1fr; }
+      .tb-cell { padding: 5px 6px; }
+      .tb-cell:nth-child(3n) { border-right: 1px solid var(--line); }
+      .tb-cell:nth-child(2n) { border-right: 0; }
+      .tb-cell:nth-last-child(-n+3) { border-bottom: 1px solid var(--line); }
+      .tb-cell:nth-last-child(-n+2) { border-bottom: 0; }
+      .tb-label { font-size: 6px; }
+      .tb-value { font-size: 8px; }
+      #tb-sheet { font-size: 10px; }
+      .viewer-tools { padding: 16px 12px 28px; }
+      .section-control { gap: 10px; padding: 10px; }
+      .section-control label { font-size: 9px; }
+      .section-control small { grid-column: 1 / -1; font-size: 11px; }
+      .details { grid-template-columns: repeat(2, 1fr); }
+      .detail:nth-child(2) { border-right: 0; }
+      .detail:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      footer { padding: 16px 12px; font-size: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-marker, .cut-live-tag { transition: none; }
+    }
+  </style>
+  <script type="importmap">
+    {"imports":{"three":"/vendor/three.module.js"}}
+  </script>
+  <script type="module" src="/share-client.js"></script>
+</head>
+<body>
+  <main class="client-board">
+    <section class="scroll-track" id="scroll-track" aria-label="Model dan denah proyek">
+      <div class="sticky-viewport">
+        <header class="client-header">
+          <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Studio Arsitektur</span></div>
+          <span class="readonly-tag">Pratinjau klien · baca saja</span>
+        </header>
+        <div id="model-canvas"></div>
+        <img id="preview-image" alt="Pratinjau model proyek">
+        <div class="hero-copy">
+          <span class="eyebrow">Pratinjau proyek</span>
+          <h1 id="project-title">Memuat proyek…</h1>
+          <p class="project-description" id="project-description"></p>
+          <p class="scroll-hint">Gulir untuk melihat potongan model dan denah setiap lantai.</p>
+          <span id="viewer-status" role="status">Memuat model 3D…</span>
+          <p id="page-error" class="error" role="alert"></p>
+        </div>
+        <div class="elevation-control" aria-label="Penunjuk ketinggian model">
+          <div class="elevation-axis">
+            <span class="scroll-marker" id="scroll-marker" aria-hidden="true">▶</span>
+            <span class="cut-live-tag" id="cut-live-tag">POTONGAN —</span>
+            <div id="floor-list"></div>
+          </div>
+        </div>
+        <section class="plan-panel" aria-live="polite" aria-label="Denah lantai aktif">
+          <div class="plan-header"><span id="plan-title">AKSONOMETRI</span><span id="plan-level">MODEL 3D</span></div>
+          <div class="plan-box"><img id="floor-plan" alt="Denah proyek"></div>
+        </section>
+        <div class="title-block" aria-label="Informasi gambar proyek">
+          <div class="tb-cell span-2"><span class="tb-label">Proyek</span><span class="tb-value" id="tb-project">—</span></div>
+          <div class="tb-cell"><span class="tb-label">Gambar</span><span class="tb-value" id="tb-drawing">Aksonometri</span></div>
+          <div class="tb-cell"><span class="tb-label">Lantai</span><span class="tb-value" id="tb-floor">—</span></div>
+          <div class="tb-cell"><span class="tb-label">Bidang potong</span><span class="tb-value mono" id="tb-cut">—</span></div>
+          <div class="tb-cell"><span class="tb-label">Lembar</span><span class="tb-value" id="tb-sheet">A-001</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="viewer-tools" aria-label="Kontrol dan informasi proyek">
+      <section class="section-control" aria-label="Kontrol potongan model">
+        <label for="section-slider">Bidang potong <output id="section-height" aria-live="polite">—</output></label>
+        <button id="show-full-model" type="button">Tampilkan model utuh</button>
+        <input id="section-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Ketinggian bidang potong">
+        <small>Pengguliran menyelaraskan potongan dan denah secara otomatis. Slider dapat digunakan sebagai kontrol alternatif.</small>
+      </section>
+      <div class="details">
+        <div class="detail"><span class="label">Lokasi</span><span class="value" id="project-location">—</span></div>
+        <div class="detail"><span class="label">Dimensi model</span><span class="value" id="project-dimensions">—</span></div>
+        <div class="detail"><span class="label">Jumlah lantai</span><span class="value" id="project-floor-count">—</span></div>
+        <div class="detail"><span class="label">Arah utara</span><span class="value" id="project-north">—</span></div>
+      </div>
+      <a class="download" id="download-model" href="#" download="model.glb">Unduh model GLB</a>
+    </section>
+    <footer><span>Pratinjau klien · baca saja</span><span>© Studio Arsitektur</span></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Arsitektur · Model 3D Aksonometri</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="apple-touch-icon" href="assets/app-icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-paper: #efeee9;
+      --bg-card: #e5e2da;
+      --ink-primary: #1a1a18;
+      --ink-secondary: #5c5b57;
+      --line-color: #2b2b28;
+      --accent-orange: #e85325;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+    }
+
+    .drawing-board {
+      position: relative;
+      max-width: 1280px;
+      margin: 0 auto;
+      border-left: 1px solid var(--line-color);
+      border-right: 1px solid var(--line-color);
+    }
+
+    /* Navigasi Atas (Hanya Home & Projects) */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--line-color);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background-color: var(--bg-paper);
+      position: relative;
+      z-index: 30;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--ink-primary);
+    }
+
+    .brand-mark {
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid var(--line-color);
+      display: inline-block;
+      position: relative;
+    }
+
+    .brand-mark::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1.5px;
+      background: var(--accent-orange);
+    }
+
+    nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--ink-secondary);
+      transition: color 0.2s;
+    }
+
+    nav a:hover, nav a.active {
+      color: var(--ink-primary);
+      font-weight: 600;
+    }
+
+    .admin-button {
+      background: transparent;
+      color: var(--ink-primary);
+      border: 1px solid var(--line-color);
+      padding: 8px 10px;
+      font: 500 10px var(--font-mono);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-dark {
+      background: var(--ink-primary);
+      color: var(--bg-paper);
+      padding: 9px 15px;
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--ink-primary);
+      display: inline-block;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--ink-primary);
+      padding: 9px 15px;
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--line-color);
+      display: inline-block;
+    }
+
+    /* Jalur Scroll Utama */
+    .scroll-track {
+      position: relative;
+      height: 380vh;
+      border-bottom: 1px solid var(--line-color);
+    }
+
+    .sticky-viewport {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #canvas-3d {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Teks Judul */
+    .hero-copy {
+      position: relative;
+      z-index: 10;
+      max-width: 480px;
+      padding: 32px 28px;
+      pointer-events: none;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(24px, 3.5vw, 42px);
+      font-weight: 500;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .hero-copy p {
+      font-size: 13.5px;
+      color: var(--ink-secondary);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    /* Pengukur Ketinggian (Elevation Slicer) */
+    .elevation-control {
+      position: absolute;
+      left: 28px;
+      bottom: 32px;
+      z-index: 15;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: rgba(239, 238, 233, 0.88);
+      padding: 12px 16px 12px 24px;
+      border: 1px solid rgba(43, 43, 40, 0.25);
+      backdrop-filter: blur(4px);
+    }
+
+    .elevation-axis {
+      position: relative;
+      border-left: 1px solid var(--line-color);
+      padding-left: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .scroll-marker {
+      position: absolute;
+      left: -10px;
+      top: 0%;
+      transform: translateY(-50%);
+      color: var(--accent-orange);
+      font-size: 10px;
+      transition: top 0.1s linear;
+      pointer-events: none;
+    }
+
+    .cut-live-tag {
+      position: absolute;
+      left: 102px;
+      top: 0%;
+      transform: translateY(-50%);
+      background-color: var(--accent-orange);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 2px 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: top 0.1s linear;
+    }
+
+    .level-btn {
+      background: none;
+      border: none;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      padding: 2px 0;
+      transition: color 0.2s;
+    }
+
+    .level-btn::before {
+      content: '';
+      position: absolute;
+      left: -14px;
+      width: 7px;
+      height: 1px;
+      background: var(--line-color);
+    }
+
+    .level-btn.active {
+      color: var(--ink-primary);
+      font-weight: 600;
+    }
+
+    /* Kotak Denah 2D & Kop Gambar */
+    .plan-panel {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      z-index: 15;
+      width: 320px;
+      background-color: var(--bg-paper);
+      border: 1px solid var(--line-color);
+      padding: 12px;
+    }
+
+    .plan-header {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .plan-svg-box {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border: 1px solid rgba(43, 43, 40, 0.25);
+      background: #f5f4f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .title-block {
+      position: absolute;
+      bottom: 24px;
+      right: 28px;
+      z-index: 15;
+      width: 320px;
+      background-color: var(--bg-paper);
+      border: 1px solid var(--line-color);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .tb-cell {
+      padding: 7px 9px;
+      border-right: 1px solid var(--line-color);
+      border-bottom: 1px solid var(--line-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .tb-cell.span-2 {
+      grid-column: span 2;
+    }
+
+    .tb-cell:nth-child(2),
+    .tb-cell:nth-child(5),
+    .tb-cell:nth-child(8) {
+      border-right: none;
+    }
+
+    .tb-cell:nth-child(6),
+    .tb-cell:nth-child(7),
+    .tb-cell:nth-child(8) {
+      border-bottom: none;
+    }
+
+    .tb-label {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-secondary);
+      margin-bottom: 2px;
+    }
+
+    .tb-val {
+      font-size: 10.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tb-val.mono {
+      font-family: var(--font-mono);
+    }
+
+    .tb-sheet {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    footer {
+      border-top: 1px solid var(--line-color);
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* =========================================
+       OPTIMASI LAYAR HP (MOBILE)
+       ========================================= */
+    @media (max-width: 768px) {
+      body {
+        padding: 0 6px;
+      }
+
+      header {
+        padding: 12px 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      nav {
+        gap: 14px;
+        font-size: 11px;
+      }
+
+      .admin-button {
+        padding: 7px 6px;
+        font-size: 8px;
+      }
+
+      .hero-copy {
+        padding: 16px 14px 8px;
+        max-width: 100%;
+      }
+
+      .hero-copy h1 {
+        font-size: 22px;
+        margin-bottom: 6px;
+      }
+
+      .hero-copy p {
+        font-size: 12px;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .hero-actions .btn-dark,
+      .hero-actions .btn-outline {
+        padding: 7px 10px;
+        font-size: 9.5px;
+      }
+
+      .elevation-control {
+        left: 10px;
+        top: 165px;
+        bottom: auto;
+        padding: 8px 10px 8px 16px;
+        font-size: 9.5px;
+      }
+
+      .elevation-axis {
+        padding-left: 10px;
+        gap: 11px;
+      }
+
+      .level-btn {
+        font-size: 9.5px;
+        gap: 4px;
+      }
+
+      .level-btn::before {
+        left: -10px;
+        width: 5px;
+      }
+
+      .cut-live-tag {
+        left: 76px;
+        font-size: 8.5px;
+        padding: 1px 4px;
+      }
+
+      .plan-panel {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        right: auto;
+        width: calc(46% - 12px);
+        padding: 8px;
+      }
+
+      .plan-header {
+        font-size: 8.5px;
+        margin-bottom: 4px;
+      }
+
+      .title-block {
+        bottom: 10px;
+        right: 10px;
+        width: calc(54% - 12px);
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tb-cell.hide-mobile {
+        display: none;
+      }
+
+      .tb-cell.span-2 {
+        grid-column: span 2;
+      }
+
+      .tb-cell:nth-child(2) {
+        border-right: none;
+      }
+
+      .tb-cell {
+        padding: 5px 6px;
+      }
+
+      .tb-label {
+        font-size: 7px;
+      }
+
+      .tb-val {
+        font-size: 9.5px;
+      }
+
+      .tb-sheet {
+        font-size: 12px;
+      }
+
+      footer {
+        padding: 20px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="drawing-board">
+    <header>
+      <a href="index.html" class="brand">
+        <span class="brand-mark"></span>
+        <span>STUDIO ARSITEKTUR</span>
+      </a>
+      <nav>
+        <a href="index.html" class="active">Model 3D</a>
+        <a href="projects.html">Proyek</a>
+      </nav>
+      <a href="/admin.html" class="admin-button">Masuk Admin</a>
+    </header>
+
+    <section class="scroll-track" id="scroll-track">
+      <div class="sticky-viewport">
+        
+        <div id="canvas-3d"></div>
+
+        <div class="hero-copy">
+          <h1 data-edit-key="home-hero-title">Bangunan, dirancang dari bagian dalam ke luar.</h1>
+          <p>Gulir ke bawah untuk mengiris bangunan lantai demi lantai dan melihat denah 2D yang berubah otomatis.</p>
+          <div class="hero-actions">
+            <a href="projects.html" class="btn-dark">Lihat Semua Proyek →</a>
+          </div>
+        </div>
+
+        <!-- Pengukur Ketinggian -->
+        <div class="elevation-control">
+          <div class="elevation-axis">
+            <span class="scroll-marker" id="scroll-marker">▶</span>
+            <span class="cut-live-tag" id="cut-live-tag">POTONGAN +13.500</span>
+
+            <button class="level-btn active" data-progress="0.00">
+              <span>Atap</span> <span>+13.5</span>
+            </button>
+            <button class="level-btn" data-progress="0.28">
+              <span>Lantai 2</span> <span>+9.0</span>
+            </button>
+            <button class="level-btn" data-progress="0.52">
+              <span>Lantai 1</span> <span>+4.5</span>
+            </button>
+            <button class="level-btn" data-progress="0.76">
+              <span>Dasar</span> <span>±0.0</span>
+            </button>
+            <button class="level-btn" data-progress="1.00">
+              <span>Basemen</span> <span>−4.0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel Denah 2D -->
+        <div class="plan-panel">
+          <div class="plan-header">
+            <span id="plan-title">AKSONOMETRI</span>
+            <span>1:200</span>
+          </div>
+          <div class="plan-svg-box" id="plan-container"></div>
+        </div>
+
+        <!-- Kop Gambar -->
+        <div class="title-block">
+          <div class="tb-cell hide-mobile">
+            <span class="tb-label">Studio</span>
+            <span class="tb-val" data-edit-key="home-practice">Studio Arsitek</span>
+          </div>
+          <div class="tb-cell span-2">
+            <span class="tb-label">Proyek</span>
+            <span class="tb-val" data-edit-key="home-project">Rumah Gambar, Aarhus</span>
+          </div>
+          <div class="tb-cell">
+            <span class="tb-label">Gambar</span>
+            <span class="tb-val" id="tb-drawing">Aksonometri</span>
+          </div>
+          <div class="tb-cell">
+            <span class="tb-label">Lantai</span>
+            <span class="tb-val mono" id="tb-level">—</span>
+          </div>
+          <div class="tb-cell hide-mobile">
+            <span class="tb-label">Bidang Potong</span>
+            <span class="tb-val mono" id="tb-cut">+13.500</span>
+          </div>
+          <div class="tb-cell">
+            <span class="tb-label">Skala</span>
+            <span class="tb-val mono">1:200 @ A1</span>
+          </div>
+          <div class="tb-cell hide-mobile">
+            <span class="tb-label">Digambar / Diperiksa</span>
+            <span class="tb-val mono">MK / AR</span>
+          </div>
+          <div class="tb-cell">
+            <span class="tb-label">Lembar</span>
+            <span class="tb-sheet" id="tb-sheet">A-001</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <footer>
+      <span>LEMBAR A-001</span>
+      <span>© 2026 STUDIO ARSITEKTUR</span>
+    </footer>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/vendor/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const container = document.getElementById('canvas-3d');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#efeee9');
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.localClippingEnabled = true;
+    container.appendChild(renderer.domElement);
+
+    const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
+
+    function updateCameraFraming() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      const aspect = w / h;
+      const isMobile = w <= 768;
+      const frustumSize = isMobile ? 38 : 27;
+
+      camera.left = (frustumSize * aspect) / -2;
+      camera.right = (frustumSize * aspect) / 2;
+      camera.top = frustumSize / 2;
+      camera.bottom = frustumSize / -2;
+
+      if (isMobile) {
+        camera.position.set(22, 21, 25);
+        camera.lookAt(-1.5, 4.2, 0);
+      } else {
+        camera.position.set(23, 20, 25);
+        camera.lookAt(0, 3.5, 0);
+      }
+
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    updateCameraFraming();
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+    const dirLight = new THREE.DirectionalLight(0xfff9f0, 0.85);
+    dirLight.position.set(18, 32, 14);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    const d = 22;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.bias = -0.0005;
+    scene.add(dirLight);
+
+    let targetCutY = 16.5;
+    let currentCutY = 16.5;
+    const clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), currentCutY);
+
+    const matConcrete = new THREE.MeshStandardMaterial({ color: 0xd6d1c7, roughness: 0.85, clippingPlanes: [clipPlane], clipShadows: true });
+    const matWall = new THREE.MeshStandardMaterial({ color: 0xe3dfd6, roughness: 0.8, clippingPlanes: [clipPlane], clipShadows: true });
+    const matInteriorFloor = new THREE.MeshStandardMaterial({ color: 0xc8bfa8, roughness: 0.9, clippingPlanes: [clipPlane], clipShadows: true });
+    const matGlass = new THREE.MeshStandardMaterial({ color: 0x3b4248, roughness: 0.2, metalness: 0.4, transparent: true, opacity: 0.65, clippingPlanes: [clipPlane] });
+
+    function createArchBox(w, h, d, x, y, z, material, applyClip = true) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      const edges = new THREE.EdgesGeometry(geo);
+      const lineMat = new THREE.LineBasicMaterial({
+        color: 0x2b2b28,
+        transparent: true,
+        opacity: 0.35,
+        clippingPlanes: applyClip ? [clipPlane] : []
+      });
+      mesh.add(new THREE.LineSegments(edges, lineMat));
+      scene.add(mesh);
+      return mesh;
+    }
+
+    const matSite = new THREE.MeshStandardMaterial({ color: 0xc2bcb0, roughness: 0.95 });
+    createArchBox(24, 2.2, 16, 0, -1.1, 0, matSite, false);
+
+    // Basement
+    createArchBox(13, 0.3, 8.5, -1, 0.15, -0.5, matInteriorFloor);
+    createArchBox(0.3, 2.6, 8.5, -3.5, 1.4, -0.5, matWall);
+    createArchBox(0.3, 2.6, 5.5, 1.5, 1.4, -2, matWall);
+    createArchBox(6.5, 2.6, 0.3, -1, 1.4, 0.5, matWall);
+
+    // Ground Floor
+    createArchBox(13.4, 0.35, 9, -1, 2.8, -0.5, matConcrete);
+    createArchBox(13.4, 3.6, 0.4, -1, 4.6, -4.8, matWall);
+    createArchBox(0.4, 3.6, 9, -7.5, 4.6, -0.5, matWall);
+    createArchBox(0.4, 3.6, 9, 5.5, 4.6, -0.5, matWall);
+    createArchBox(0.3, 3.6, 6, 0.5, 4.6, -1.8, matWall);
+    createArchBox(12.6, 3.4, 0.15, -1, 4.5, 3.8, matGlass);
+    for (let cx = -6.5; cx <= 4.5; cx += 2.75) {
+      createArchBox(0.25, 3.6, 0.35, cx, 4.6, 3.85, matConcrete);
+    }
+
+    // Level 1
+    createArchBox(13.6, 0.4, 9.2, -1, 6.6, -0.5, matConcrete);
+    createArchBox(13.6, 3.8, 0.45, -1, 8.5, -4.9, matWall);
+    createArchBox(0.45, 3.8, 9.2, -7.6, 8.5, -0.5, matWall);
+    createArchBox(0.45, 3.8, 9.2, 5.6, 8.5, -0.5, matWall);
+    createArchBox(13.6, 3.8, 0.45, -1, 8.5, 3.9, matWall);
+    createArchBox(5.5, 3.8, 0.3, -4.5, 8.5, -0.5, matWall);
+    createArchBox(0.3, 3.8, 4.5, 1.2, 8.5, 1.5, matWall);
+
+    // Level 2
+    createArchBox(14.2, 0.45, 10.6, -1, 10.6, 0.2, matConcrete);
+    createArchBox(14.2, 3.8, 0.45, -1, 12.5, -4.9, matWall);
+    createArchBox(0.45, 3.8, 10.6, -7.9, 12.5, 0.2, matWall);
+    createArchBox(0.45, 3.8, 10.6, 5.9, 12.5, 0.2, matWall);
+    createArchBox(14.2, 3.8, 0.45, -1, 12.5, 5.3, matWall);
+    createArchBox(0.3, 3.8, 7.5, -2.5, 12.5, 0.2, matWall);
+
+    // Roof
+    createArchBox(14.5, 0.5, 10.9, -1, 14.6, 0.2, matConcrete);
+    createArchBox(1.6, 0.85, 7.4, -4.8, 15.2, 0.2, matWall);
+    createArchBox(1.6, 0.85, 7.4, -1.6, 15.2, 0.2, matWall);
+    createArchBox(1.6, 0.85, 7.4, 1.6, 15.2, 0.2, matWall);
+
+    const matTree = new THREE.MeshStandardMaterial({ color: 0xdedbd2, roughness: 0.9 });
+    const matTrunk = new THREE.MeshStandardMaterial({ color: 0x3a3935 });
+    [[-9.5, 4.8], [-5.5, 6.2], [-1.2, 6.3], [3.5, 6.1], [8.8, 4.5], [8.5, -3.5]].forEach(([tx, tz]) => {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.8, 8), matTrunk);
+      trunk.position.set(tx, 0.9, tz);
+      trunk.castShadow = true;
+      scene.add(trunk);
+
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(0.95, 20, 20), matTree);
+      crown.position.set(tx, 2.3, tz);
+      crown.castShadow = true;
+      scene.add(crown);
+    });
+
+    const cutRingGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(14.6, 0.08, 11.0));
+    const cutRing = new THREE.LineSegments(cutRingGeo, new THREE.LineBasicMaterial({ color: 0xe85325 }));
+    cutRing.position.set(-1, currentCutY, 0.2);
+    cutRing.visible = false;
+    scene.add(cutRing);
+
+    const levelsData = [
+      {
+        title: 'AKSONOMETRI',
+        drawing: 'Aksonometri',
+        levelText: '—',
+        sheet: 'A-001',
+        svg: `<svg viewBox="0 0 280 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <rect x="45" y="35" width="190" height="130" fill="#efeee9" stroke="#1a1a18" stroke-width="2"/>
+          <rect x="62" y="52" width="22" height="96" fill="none" stroke="#1a1a18" stroke-width="1.2"/>
+          <rect x="102" y="52" width="22" height="96" fill="none" stroke="#1a1a18" stroke-width="1.2"/>
+          <rect x="142" y="52" width="22" height="96" fill="none" stroke="#1a1a18" stroke-width="1.2"/>
+        </svg>`
+      },
+      {
+        title: 'LANTAI 2',
+        drawing: 'Lantai 2',
+        levelText: 'Lantai 2 +9.000',
+        sheet: 'A-104',
+        svg: `<svg viewBox="0 0 280 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <rect x="45" y="35" width="190" height="130" fill="#efeee9" stroke="#e85325" stroke-width="2.5"/>
+          <line x1="125" y1="35" x2="125" y2="165" stroke="#1a1a18" stroke-width="2"/>
+          <rect x="180" y="50" width="40" height="45" fill="none" stroke="#1a1a18" stroke-dasharray="3 2"/>
+          <text x="55" y="95" font-family="monospace" font-size="9" fill="#1a1a18">GALERI</text>
+          <text x="135" y="135" font-family="monospace" font-size="9" fill="#1a1a18">STUDIO</text>
+        </svg>`
+      },
+      {
+        title: 'LANTAI 1',
+        drawing: 'Lantai 1',
+        levelText: 'Lantai 1 +4.500',
+        sheet: 'A-103',
+        svg: `<svg viewBox="0 0 280 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <rect x="45" y="35" width="190" height="130" fill="#efeee9" stroke="#e85325" stroke-width="2.5"/>
+          <line x1="45" y1="100" x2="145" y2="100" stroke="#1a1a18" stroke-width="2"/>
+          <line x1="165" y1="85" x2="165" y2="165" stroke="#1a1a18" stroke-width="2"/>
+          <text x="55" y="70" font-family="monospace" font-size="9" fill="#1a1a18">GALERI</text>
+          <text x="55" y="135" font-family="monospace" font-size="9" fill="#1a1a18">MEZANIN</text>
+        </svg>`
+      },
+      {
+        title: 'LANTAI DASAR',
+        drawing: 'Lantai dasar',
+        levelText: 'Dasar ±0.000',
+        sheet: 'A-102',
+        svg: `<svg viewBox="0 0 280 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <rect x="45" y="35" width="190" height="130" fill="#efeee9" stroke="#e85325" stroke-width="2.5"/>
+          <line x1="155" y1="35" x2="155" y2="135" stroke="#1a1a18" stroke-width="2"/>
+          <line x1="155" y1="95" x2="235" y2="95" stroke="#1a1a18" stroke-width="1.5"/>
+          <text x="58" y="105" font-family="monospace" font-size="9" fill="#1a1a18">PINTU MASUK</text>
+          <text x="165" y="70" font-family="monospace" font-size="9" fill="#1a1a18">KAFE</text>
+          <text x="165" y="130" font-family="monospace" font-size="9" fill="#1a1a18">TOKO</text>
+        </svg>`
+      },
+      {
+        title: 'BASEMEN',
+        drawing: 'Basemen',
+        levelText: 'Basemen −4.000',
+        sheet: 'A-101',
+        svg: `<svg viewBox="0 0 280 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <rect x="45" y="35" width="190" height="130" fill="#efeee9" stroke="#e85325" stroke-width="2.5"/>
+          <line x1="115" y1="35" x2="115" y2="165" stroke="#1a1a18" stroke-width="2"/>
+          <line x1="115" y1="105" x2="235" y2="105" stroke="#1a1a18" stroke-width="2"/>
+          <text x="55" y="100" font-family="monospace" font-size="9" fill="#1a1a18">ARSIP</text>
+          <text x="128" y="75" font-family="monospace" font-size="9" fill="#1a1a18">RUANG BELAJAR</text>
+          <text x="128" y="140" font-family="monospace" font-size="9" fill="#1a1a18">LOBI</text>
+        </svg>`
+      }
+    ];
+
+    function addPlanAnnotations(svg) {
+      const gridX = [45, 92.5, 140, 187.5, 235];
+      const gridY = [35, 78.3, 121.7, 165];
+      const columnLabels = gridX.map((x, index) => `
+        <circle cx="${x}" cy="14" r="8" fill="#efeee9" stroke="#e85325" stroke-width="0.8"/>
+        <text x="${x}" y="16.5" text-anchor="middle" fill="#e85325" font-family="monospace" font-size="7">${index + 1}</text>
+      `).join('');
+      const rowLabels = gridY.map((y, index) => `
+        <circle cx="18" cy="${y}" r="8" fill="#efeee9" stroke="#e85325" stroke-width="0.8"/>
+        <text x="18" y="${y + 2.5}" text-anchor="middle" fill="#e85325" font-family="monospace" font-size="7">${String.fromCharCode(65 + index)}</text>
+      `).join('');
+      const verticalGrid = gridX.map(x =>
+        `<line x1="${x}" y1="23" x2="${x}" y2="165"/>`
+      ).join('');
+      const horizontalGrid = gridY.map(y =>
+        `<line x1="27" y1="${y}" x2="245" y2="${y}"/>`
+      ).join('');
+      const dimensions = gridX.slice(0, -1).map((x, index) => {
+        const endX = gridX[index + 1];
+        const midX = (x + endX) / 2;
+        return `
+          <line x1="${x}" y1="174" x2="${endX}" y2="174" stroke="#1a1a18" stroke-width="0.45"/>
+          <line x1="${x}" y1="171" x2="${x}" y2="177" stroke="#1a1a18" stroke-width="0.45"/>
+          <line x1="${endX}" y1="171" x2="${endX}" y2="177" stroke="#1a1a18" stroke-width="0.45"/>
+          <text x="${midX}" y="185" text-anchor="middle" fill="#5c5b57" font-family="monospace" font-size="5.8">7.500</text>
+        `;
+      }).join('');
+      const annotations = `
+        <g fill="none" stroke="#e85325" stroke-width="0.55" stroke-dasharray="3 2" opacity="0.38">
+          ${verticalGrid}${horizontalGrid}
+        </g>
+        <g>${columnLabels}${rowLabels}</g>
+        <g>${dimensions}</g>
+        <g transform="translate(260 48)" font-family="monospace" text-anchor="middle">
+          <circle r="11" fill="#efeee9" stroke="#2b2b28" stroke-width="0.7"/>
+          <path d="M0 -9 L-3 2 L0 0 L3 2 Z" fill="#e85325"/>
+          <path d="M0 9 L-2 2 L0 3 L2 2 Z" fill="#2b2b28"/>
+          <title>Arah mata angin: Utara, Timur, Selatan, Barat</title>
+          <text y="-14" font-size="6.5" fill="#1a1a18">U</text>
+          <text y="17" font-size="5.5" fill="#5c5b57">S</text>
+          <text x="-15" y="2" font-size="5.5" fill="#5c5b57">B</text>
+          <text x="15" y="2" font-size="5.5" fill="#5c5b57">T</text>
+        </g>`;
+      return svg.replace('</svg>', `${annotations}</svg>`);
+    }
+
+    const planContainer = document.getElementById('plan-container');
+    const planTitle = document.getElementById('plan-title');
+    const tbDrawing = document.getElementById('tb-drawing');
+    const tbLevel = document.getElementById('tb-level');
+    const tbCut = document.getElementById('tb-cut');
+    const tbSheet = document.getElementById('tb-sheet');
+    const scrollMarker = document.getElementById('scroll-marker');
+    const cutLiveTag = document.getElementById('cut-live-tag');
+    const levelBtns = document.querySelectorAll('.level-btn');
+    const scrollTrack = document.getElementById('scroll-track');
+
+    let activeIndex = -1;
+
+    function updateByScroll() {
+      const rect = scrollTrack.getBoundingClientRect();
+      const scrollableDistance = rect.height - window.innerHeight;
+      
+      let progress = -rect.top / scrollableDistance;
+      progress = Math.max(0, Math.min(1, progress));
+
+      targetCutY = 16.5 - progress * (16.5 - 0.8);
+
+      const displayMeters = 13.5 - progress * 16.3;
+      const formattedMeters = (displayMeters >= 0 ? '+' : '−') + Math.abs(displayMeters).toFixed(3);
+
+      const pct = (progress * 92 + 4) + '%';
+      scrollMarker.style.top = pct;
+      cutLiveTag.style.top = pct;
+      cutLiveTag.textContent = 'POTONGAN ' + formattedMeters;
+      tbCut.textContent = formattedMeters;
+
+      let idx = 0;
+      if (progress > 0.82) idx = 4;
+      else if (progress > 0.60) idx = 3;
+      else if (progress > 0.38) idx = 2;
+      else if (progress > 0.15) idx = 1;
+      else idx = 0;
+
+      if (idx !== activeIndex) {
+        activeIndex = idx;
+        const data = levelsData[idx];
+        planTitle.textContent = data.title;
+        planContainer.innerHTML = addPlanAnnotations(data.svg);
+        tbDrawing.textContent = data.drawing;
+        tbLevel.textContent = data.levelText;
+        tbSheet.textContent = data.sheet;
+
+        levelBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+        cutRing.visible = idx !== 0;
+      }
+    }
+
+    levelBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetProg = parseFloat(btn.dataset.progress);
+        const trackTop = scrollTrack.offsetTop;
+        const scrollableDistance = scrollTrack.offsetHeight - window.innerHeight;
+        window.scrollTo({
+          top: trackTop + targetProg * scrollableDistance,
+          behavior: 'smooth'
+        });
+      });
+    });
+
+    window.addEventListener('scroll', updateByScroll, { passive: true });
+    updateByScroll();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      currentCutY += (targetCutY - currentCutY) * 0.15;
+      clipPlane.constant = currentCutY;
+      cutRing.position.y = currentCutY;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', updateCameraFraming);
+  </script>
+</body>
+</html>
